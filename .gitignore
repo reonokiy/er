@@ -1,0 +1,11 @@
+/target
+
+# Nix build outputs
+result
+result-*
+
+# Nix store paths
+.direnv/
+
+# Nix flake lockfile (optional, some prefer to commit this)
+# flake.lock

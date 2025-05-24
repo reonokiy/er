@@ -11,6 +11,8 @@ A command-line tool that collects environment variables from `.env` files in the
 
 ## Usage
 
+### Running Commands with Environment Variables
+
 ```bash
 er <command> [args...]
 ```
@@ -21,6 +23,16 @@ er npm start
 er cargo run
 er python script.py
 ```
+
+### Loading Environment Variables into Current Shell
+
+```bash
+# Fish shell
+eval (er load)
+
+# Bash/Zsh
+eval "$(er load)"
+```
 ## Installation
 
 ### Using Nix Flakes from GitHub
@@ -28,8 +40,11 @@ er python script.py
 You can run this tool directly from GitHub without cloning the repository:
 
 ```bash
-# Run directly from GitHub
+# Run commands directly from GitHub
 nix run github:reonokiy/er -- <command>
+
+# Load environment variables directly from GitHub
+nix run github:reonokiy/er load
 ```
 
 ## License

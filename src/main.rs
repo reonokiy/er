@@ -1,23 +1,68 @@
 use anyhow::{Context, Result};
+use clap::{Parser, Subcommand};
 use std::collections::HashMap;
 use std::env;
 use std::process::{Command, ExitStatus};
 
-fn main() -> Result<()> {
-    let args: Vec<String> = env::args().collect();
+/// Environment Reader (er) - Load environment variables from .env files and run commands with them
+#[derive(Parser)]
+#[command(author, version, about, long_about = None)]
+struct Cli {
+    #[command(subcommand)]
+    command: Commands,
+}
 
-    if args.len() < 2 {
-        anyhow::bail!("No command specified");
+#[derive(Subcommand)]
+enum Commands {
+    /// Load environment variables and print them as executable shell commands
+    Load,
+
+    /// Run a command with environment variables from .env files
+    #[command(external_subcommand)]
+    Exec(Vec<String>),
+}
+
+/// Escapes a string to be safely used in shell commands
+fn shell_escape(s: &str) -> String {
+    // Basic shell escaping for fish and other shells
+    s.replace("\"", "\\\"")
+        .replace("$", "\\$")
+        .replace("`", "\\`")
+}
+
+fn main() -> Result<()> {
+    let cli = Cli::parse();
+
+    match &cli.command {
+        Commands::Load => {
+            // Collect environment variables from .env files
+            let env_vars = collect_env_vars()?;
+
+            // Print environment variables as shell export commands
+            for (key, value) in env_vars {
+                // Escape special characters for shell
+                let escaped_value = shell_escape(&value);
+                println!("export {}=\"{}\";", key, escaped_value);
+            }
+        }
+
+        Commands::Exec(args) => {
+            if args.is_empty() {
+                anyhow::bail!("No command specified");
+            }
+
+            // Collect environment variables from .env files
+            let env_vars = collect_env_vars()?;
+
+            // Execute the command with the collected environment variables
+            let status = execute_command(&args, &env_vars)?;
+
+            // Exit with the same status code as the command
+            std::process::exit(status.code().unwrap_or(1));
+        }
     }
 
-    // Collect environment variables from .env files
-    let env_vars = collect_env_vars()?;
-
-    // Execute the command with the collected environment variables
-    let status = execute_command(&args[1..], &env_vars)?;
-
-    // Exit with the same status code as the command
-    std::process::exit(status.code().unwrap_or(1));
+    Ok(())
 }
 
 fn parse_env_file(content: &str) -> Result<HashMap<String, String>> {

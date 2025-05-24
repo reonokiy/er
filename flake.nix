@@ -33,6 +33,10 @@
           ];
         };
 
+        # Read version from Cargo.toml
+        cargoToml = builtins.fromTOML (builtins.readFile ./Cargo.toml);
+        version = cargoToml.package.version;
+
         nativeBuildInputs = with pkgs; [
           rustToolchain
           pkg-config
@@ -42,7 +46,7 @@
       {
         packages.default = pkgs.rustPlatform.buildRustPackage {
           pname = "er";
-          version = "0.1.0";
+          version = version;
           src = ./.;
 
           cargoLock = {
